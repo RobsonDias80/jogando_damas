@@ -96,13 +96,13 @@
           <!-- Seletor de Times -->
           <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
             <span class="text-[10px] text-slate-300 uppercase tracking-wider font-semibold">Partida:</span>
-            <select id="select-team-w" onchange="changeMatchup('w', this.value)" class="bg-slate-900/90 text-amber-200 border border-amber-400/40 rounded-lg px-2 py-0.5 text-[11px] font-bold focus:outline-none cursor-pointer">
+            <select id="select-team-w" onchange="changeMatchup('w', this.value)" class="bg-slate-900/90 text-amber-200 border border-amber-400/40 rounded-lg px-2 py-0.5 text-[11px] font-bold focus:outline-none focus:ring-2 focus:ring-amber-300">
               <option value="yellow" selected>🟡 Time Amarelo</option>
               <option value="blue">🔵 Time Azul</option>
               <option value="green">🟢 Time Verde</option>
             </select>
             <span class="text-[10px] text-slate-400 font-bold">VS</span>
-            <select id="select-team-b" onchange="changeMatchup('b', this.value)" class="bg-slate-900/90 text-sky-200 border border-sky-400/40 rounded-lg px-2 py-0.5 text-[11px] font-bold focus:outline-none cursor-pointer">
+            <select id="select-team-b" onchange="changeMatchup('b', this.value)" class="bg-slate-900/90 text-sky-200 border border-sky-400/40 rounded-lg px-2 py-0.5 text-[11px] font-bold focus:outline-none focus:ring-2 focus:ring-sky-300">
               <option value="yellow">🟡 Time Amarelo</option>
               <option value="blue" selected>🔵 Time Azul</option>
               <option value="green">🟢 Time Verde</option>
@@ -122,7 +122,7 @@
 
       <!-- Ações -->
       <div class="flex items-center gap-1.5 sm:gap-2">
-        <button onclick="openRosterModal()" class="btn-action flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 text-slate-950 shadow-lg">
+        <button onclick="openRosterModal()" class="btn-action flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-yellow-400 hover:to-amber-400 text-slate-950 shadow-lg">
           <span class="material-symbols-rounded text-lg">face</span>
           <span class="hidden sm:inline">Figurinhas</span>
         </button>
@@ -138,7 +138,7 @@
 
     <!-- TOAST DE EVENTO -->
     <div class="flex-1 flex items-center justify-between pointer-events-none my-2 relative">
-      <div id="combat-toast" class="pointer-events-none absolute left-1/2 -translate-x-1/2 top-2 px-5 py-2 rounded-full glass-panel border border-yellow-400/50 text-xs sm:text-sm font-bold text-yellow-100 opacity-0 transition-all duration-300 transform -translate-y-3 shadow-2xl">
+      <div id="combat-toast" class="pointer-events-none absolute left-1/2 -translate-x-1/2 top-2 px-5 py-2 rounded-full glass-panel border border-yellow-400/50 text-xs sm:text-sm font-bold text-yellow-100 opacity-0 -translate-y-3 transition-all duration-300">
         👑 Dama coroada!
       </div>
     </div>
@@ -172,9 +172,9 @@
     <div class="glass-panel rounded-3xl p-6 max-w-lg w-full text-center border border-yellow-400/50 shadow-2xl">
       <h2 class="font-title text-xl font-bold text-yellow-100 mb-2">Regras do Jogo de Damas</h2>
       <p class="text-xs sm:text-sm text-slate-300 mb-4 leading-relaxed text-left">
-        • As peças se movem nas **diagonais das casas escuras**.<br>
+        • As peças se movem nas <strong>diagonais das casas escuras</strong>.<br>
         • Para capturar, salte por cima da peça do adversário para a casa vazia logo atrás.<br>
-        • Se uma peça chegar até a última linha do fundo, ela vira **Dama** (ganha coroa) e pode andar e capturar para frente e para trás em várias casas!
+        • Se uma peça chegar até a última linha do fundo, ela vira <strong>Dama</strong> (ganha coroa) e pode andar e capturar para frente e para trás em várias casas!
       </p>
       <button onclick="closeTutorialModal()" class="btn-action px-6 py-2.5 rounded-xl font-title font-bold text-sm bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-950 shadow-lg">
         Entendi, Vamos Jogar!
@@ -197,9 +197,9 @@
       </div>
 
       <div id="roster-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 overflow-y-auto pr-1 flex-1"></div>
-      
+
       <div class="border-t border-white/10 pt-3 mt-3 flex items-center justify-between">
-        <span id="roster-status" class="text-xs text-emerald-300 font-semibold">Carregando fotos da pasta images/ do GitHub...</span>
+        <span id="roster-status" class="text-xs text-emerald-300 font-semibold">Carregando fotos da pasta imagens/ do GitHub...</span>
         <button onclick="closeRosterModal()" class="btn-action px-5 py-2 rounded-xl text-xs font-bold bg-yellow-400 text-slate-950">Pronto! Voltar ao Jogo</button>
       </div>
     </div>
@@ -216,20 +216,20 @@
 
   <script>
     const TEAMS = {
-      yellow: { id: 'yellow', name: 'Time Amarelo', rimHex: '#facc15', bgGrad: ['#fef08a', '#eab308', '#a16207'], dotClass: 'bg-yellow-400', folder: 'amarelo' },
-      blue:   { id: 'blue', name: 'Time Azul', rimHex: '#38bdf8', bgGrad: ['#bae6fd', '#2563eb', '#1e3a8a'], dotClass: 'bg-sky-400', folder: 'azul' },
-      green:  { id: 'green', name: 'Time Verde', rimHex: '#4ade80', bgGrad: ['#bbf7d0', '#16a34a', '#14532d'], dotClass: 'bg-emerald-400', folder: 'verde' }
+      yellow: { id: 'yellow', name: 'Time Amarelo', rimHex: '#facc15', bgGrad: ['#fef08a', '#eab308', '#a16207'], dotClass: 'bg-yellow-400', folder: 'Amarelo' },
+      blue:   { id: 'blue', name: 'Time Azul', rimHex: '#38bdf8', bgGrad: ['#bae6fd', '#2563eb', '#1e3a8a'], dotClass: 'bg-sky-400', folder: 'Azul' },
+      green:  { id: 'green', name: 'Time Verde', rimHex: '#4ade80', bgGrad: ['#bbf7d0', '#16a34a', '#14532d'], dotClass: 'bg-emerald-400', folder: 'Verde' }
     };
 
     let activeMatchTeams = { w: 'yellow', b: 'blue' };
     let currentRosterTab = 'yellow';
-    
+
     let customRosterData = {
       yellow: Array(12).fill(null),
       blue:   Array(12).fill(null),
       green:  Array(12).fill(null)
     };
-    
+
     let pieceSlotMapping = { w: {}, b: {} };
 
     function initPieceSlots() {
@@ -299,28 +299,33 @@
       }
     }
 
-    // Carrega automaticamente as imagens da pasta images/ do GitHub
+    // Carrega automaticamente as imagens da pasta imagens/ do GitHub
     function loadHostStickers() {
       let loadedTotal = 0;
+
       ['yellow', 'blue', 'green'].forEach(tKey => {
         const folder = TEAMS[tKey].folder;
-        for (let i = 0; i < 12; i++) {
+
+        for (let i = 1; i <= 12; i++) {
           const img = new Image();
-          // Procura por arquivos como images/amarelo_1.jpg, images/azul_1.jpg, images/verde_1.jpg
-          img.src = `images/${folder}_${i + 1}.jpg`;
+          const jpgSrc = `imagens/${folder}_${i}.jpg`;
+
+          img.src = jpgSrc;
           img.onload = () => {
-            customRosterData[tKey][i] = img;
+            customRosterData[tKey][i - 1] = img;
             invalidateTeamCache(tKey);
             syncPieces();
             loadedTotal++;
             document.getElementById('roster-status').textContent = `Figurinha ${loadedTotal} carregada da nuvem!`;
           };
+
           img.onerror = () => {
-            // Se não achar .jpg, tenta .png
-            const imgPng = new Image();
-            imgPng.src = `images/${folder}_${i + 1}.png`;
-            imgPng.onload = () => {
-              customRosterData[tKey][i] = imgPng;
+            const png = new Image();
+            const pngSrc = `imagens/${folder}_${i}.png`;
+
+            png.src = pngSrc;
+            png.onload = () => {
+              customRosterData[tKey][i - 1] = png;
               invalidateTeamCache(tKey);
               syncPieces();
             };
@@ -605,7 +610,7 @@
       const team = getTeamForSide(turn);
       document.getElementById('turn-text').textContent = team.name;
       document.getElementById('turn-orb').className = `w-4 h-4 rounded-full transition-all duration-500 ${team.dotClass}`;
-      
+
       let w = 0, b = 0;
       boardState.forEach(row => row.forEach(p => { if(p?.color==='w')w++; if(p?.color==='b')b++; }));
       document.getElementById('count-w').textContent = w;
@@ -630,16 +635,34 @@
       document.getElementById('gameover-modal').classList.remove('flex');
     };
 
-    window.openTutorialModal = function() { document.getElementById('tutorial-modal').classList.remove('hidden'); document.getElementById('tutorial-modal').classList.add('flex'); }
-    window.closeTutorialModal = function() { document.getElementById('tutorial-modal').classList.add('hidden'); document.getElementById('tutorial-modal').classList.remove('flex'); }
-    window.openRosterModal = function() { document.getElementById('roster-modal').classList.remove('hidden'); document.getElementById('roster-modal').classList.add('flex'); renderRosterGrid(); }
-    window.closeRosterModal = function() { document.getElementById('roster-modal').classList.add('hidden'); document.getElementById('roster-modal').classList.remove('flex'); }
+    window.openTutorialModal = function() {
+      document.getElementById('tutorial-modal').classList.remove('hidden');
+      document.getElementById('tutorial-modal').classList.add('flex');
+    };
+
+    window.closeTutorialModal = function() {
+      document.getElementById('tutorial-modal').classList.add('hidden');
+      document.getElementById('tutorial-modal').classList.remove('flex');
+    };
+
+    window.openRosterModal = function() {
+      document.getElementById('roster-modal').classList.remove('hidden');
+      document.getElementById('roster-modal').classList.add('flex');
+      renderRosterGrid();
+    };
+
+    window.closeRosterModal = function() {
+      document.getElementById('roster-modal').classList.add('hidden');
+      document.getElementById('roster-modal').classList.remove('flex');
+    };
 
     window.switchRosterTab = function(teamKey) {
       currentRosterTab = teamKey;
       ['yellow','blue','green'].forEach(t => {
         const btn = document.getElementById(`tab-team-${t}`);
-        btn.className = t === teamKey ? 'px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/30 text-amber-200 border border-amber-400' : 'px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 border border-white/10';
+        btn.className = t === teamKey
+          ? 'px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/30 text-amber-200 border border-amber-400'
+          : 'px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 border border-white/10';
       });
       renderRosterGrid();
     };
@@ -653,7 +676,7 @@
       for (let i = 0; i < 12; i++) {
         const card = document.createElement('div');
         card.className = 'p-2.5 rounded-2xl bg-slate-900 border border-white/10 flex items-center gap-2.5';
-        
+
         const previewCanvas = renderStickerCanvas(currentRosterTab, slots[i]);
         const prevUrl = previewCanvas.toDataURL('image/png');
 
@@ -661,7 +684,7 @@
           <img src="${prevUrl}" class="w-14 h-14 rounded-2xl border border-yellow-400/50 object-cover bg-slate-950 shrink-0" />
           <div class="flex-1 min-w-0">
             <div class="text-[10px] uppercase tracking-wider text-yellow-300 font-bold truncate">Peça ${i + 1} (${team.name})</div>
-            <div class="text-[10px] text-slate-400 mt-0.5">Carregado de: images/${team.folder}_${i+1}.jpg</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">Carregado de: imagens/${team.folder}_${i + 1}.jpg</div>
           </div>
         `;
         grid.appendChild(card);
@@ -676,7 +699,7 @@
     };
 
     initGame();
-    loadHostStickers(); // Inicia o carregamento automático das figurinhas da pasta images/ do GitHub
+    loadHostStickers();
 
     function animate() {
       requestAnimationFrame(animate);
