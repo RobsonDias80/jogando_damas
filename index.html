@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Damas da Turma 3D — por Robson Dias Cavalcante</title>
+  <!-- Google Fonts & Material Symbols -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,1,0" />
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Three.js & OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <style>
+    :root {
+      --font-display: 'Fredoka', sans-serif;
+      --font-sans: 'Inter', sans-serif;
+    }
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+      font-family: var(--font-sans);
+      color: #f8fafc;
+    }
+    #canvas-container {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    .font-title {
+      font-family: var(--font-display);
+      letter-spacing: 0.03em;
+    }
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    .btn-action {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+    .btn-action:hover {
+      transform: translateY(-1px);
+    }
+    .btn-action:active {
+      transform: translateY(0px) scale(0.97);
+    }
+    .cam-active {
+      background: rgba(250, 204, 21, 0.22) !important;
+      border-color: rgba(250, 204, 21, 0.8) !important;
+      color: #fef08a !important;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Container 3D -->
+  <div id="canvas-container"></div>
+
+  <!-- Interface -->
+  <div class="relative z-10 pointer-events-none flex flex-col justify-between w-full h-full p-2.5 sm:p-4">
+
+    <!-- BARRA SUPERIOR -->
+    <header class="pointer-events-auto glass-panel rounded-2xl px-3 py-2.5 sm:px-5 sm:py-3 flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 via-blue-500 to-emerald-500 flex items-center justify-center shadow-lg border border-white/30">
+          <span class="material-symbols-rounded text-white text-2xl">extension</span>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-title text-base sm:text-xl font-bold tracking-wide bg-gradient-to-r from-yellow-200 via-white to-sky-200 bg-clip-text text-transparent">
+              DAMAS DA TURMA 3D
+            </h1>
+            <span class="hidden md:inline-block text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-white/10 text-slate-200 border border-white/15">
+              Prof. Robson Dias Cavalcante
+            </span>
+          </div>
+          <!-- Seletor de Times -->
+          <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
+            <span class="text-[10px] text-slate-300 uppercase tracking-wider font-semibold">Partida:</span>
+            <select id="select-team-w" onchange="changeMatchup('w', this.value)" class="bg-slate-900/90 text-amber-200 border border-amber-400/40 rounded-lg px-2 py-0.5 text-[11px] font-bold focus:outline-none cursor-pointer">
+              <option value="yellow" selected>🟡 Time Amarelo</option>
+              <option value="blue">🔵 Time Azul</option>
+              <option value="green">🟢 Time Verde</option>
+            </select>
+            <span class="text-[10px] text-slate-400 font-bold">VS</span>
+            <select id="select-team-b" onchange="changeMatchup('b', this.value)" class="bg-slate-900/90 text-sky-200 border border-sky-400/40 rounded-lg px-2 py-0.5 text-[11px] font-bold focus:outline-none cursor-pointer">
+              <option value="yellow">🟡 Time Amarelo</option>
+              <option value="blue" selected>🔵 Time Azul</option>
+              <option value="green">🟢 Time Verde</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Turno -->
+      <div class="flex items-center gap-3 bg-slate-950/75 px-3.5 py-1.5 rounded-xl border border-white/10">
+        <div id="turn-orb" class="w-4 h-4 rounded-full bg-yellow-400 shadow-[0_0_12px_#facc15] transition-all duration-500"></div>
+        <div class="text-left">
+          <div class="text-[10px] uppercase tracking-widest text-slate-400 font-semibold">Vez de Jogar</div>
+          <div id="turn-text" class="font-title text-xs sm:text-sm font-bold text-yellow-100">Time Amarelo</div>
+        </div>
+      </div>
+
+      <!-- Ações -->
+      <div class="flex items-center gap-1.5 sm:gap-2">
+        <button onclick="openRosterModal()" class="btn-action flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 text-slate-950 shadow-lg">
+          <span class="material-symbols-rounded text-lg">face</span>
+          <span class="hidden sm:inline">Figurinhas</span>
+        </button>
+        <button onclick="openTutorialModal()" class="btn-action flex items-center gap-1 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold bg-sky-600 hover:bg-sky-500 text-white shadow-lg">
+          <span class="material-symbols-rounded text-lg">help</span>
+          <span>Regras</span>
+        </button>
+        <button onclick="resetMatch()" class="btn-action p-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/40" title="Reiniciar">
+          <span class="material-symbols-rounded text-lg">restart_alt</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- TOAST DE EVENTO -->
+    <div class="flex-1 flex items-center justify-between pointer-events-none my-2 relative">
+      <div id="combat-toast" class="pointer-events-none absolute left-1/2 -translate-x-1/2 top-2 px-5 py-2 rounded-full glass-panel border border-yellow-400/50 text-xs sm:text-sm font-bold text-yellow-100 opacity-0 transition-all duration-300 transform -translate-y-3 shadow-2xl">
+        👑 Dama coroada!
+      </div>
+    </div>
+
+    <!-- BARRA INFERIOR -->
+    <footer class="pointer-events-auto glass-panel rounded-2xl px-3 py-2 sm:px-5 sm:py-2.5 flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-1.5 bg-slate-950/65 px-2.5 py-1 rounded-xl border border-white/10">
+          <span id="tray-dot-w" class="w-2.5 h-2.5 rounded-full bg-yellow-400"></span>
+          <span class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Peças:</span>
+          <span id="count-w" class="text-xs font-bold text-white">12</span>
+        </div>
+        <div class="flex items-center gap-1.5 bg-slate-950/65 px-2.5 py-1 rounded-xl border border-white/10">
+          <span id="tray-dot-b" class="w-2.5 h-2.5 rounded-full bg-sky-400"></span>
+          <span class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Peças:</span>
+          <span id="count-b" class="text-xs font-bold text-white">12</span>
+        </div>
+      </div>
+
+      <!-- Câmeras -->
+      <div class="flex items-center gap-1 sm:gap-1.5">
+        <button id="cam-white" onclick="setCameraView('white')" class="btn-action cam-active px-2.5 py-1.5 rounded-xl text-xs font-medium bg-slate-800/70 text-slate-300 border border-white/10">Time 1</button>
+        <button id="cam-black" onclick="setCameraView('black')" class="btn-action px-2.5 py-1.5 rounded-xl text-xs font-medium bg-slate-800/70 text-slate-300 border border-white/10">Time 2</button>
+        <button id="cam-top" onclick="setCameraView('top')" class="btn-action px-2.5 py-1.5 rounded-xl text-xs font-medium bg-slate-800/70 text-slate-300 border border-white/10">Topo</button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- MODAL REGRAS -->
+  <div id="tutorial-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/85 backdrop-blur-md p-4">
+    <div class="glass-panel rounded-3xl p-6 max-w-lg w-full text-center border border-yellow-400/50 shadow-2xl">
+      <h2 class="font-title text-xl font-bold text-yellow-100 mb-2">Regras do Jogo de Damas</h2>
+      <p class="text-xs sm:text-sm text-slate-300 mb-4 leading-relaxed text-left">
+        • As peças se movem nas **diagonais das casas escuras**.<br>
+        • Para capturar, salte por cima da peça do adversário para a casa vazia logo atrás.<br>
+        • Se uma peça chegar até a última linha do fundo, ela vira **Dama** (ganha coroa) e pode andar e capturar para frente e para trás em várias casas!
+      </p>
+      <button onclick="closeTutorialModal()" class="btn-action px-6 py-2.5 rounded-xl font-title font-bold text-sm bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-950 shadow-lg">
+        Entendi, Vamos Jogar!
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL ESTÚDIO DE FIGURINHAS -->
+  <div id="roster-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-6">
+    <div class="glass-panel rounded-3xl p-4 sm:p-6 max-w-5xl w-full max-h-[92vh] flex flex-col border border-yellow-400/40 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-white/10 pb-3 mb-3">
+        <h2 class="font-title text-lg font-bold text-yellow-100">Figurinhas da Turma (Carregamento Automático do GitHub)</h2>
+        <button onclick="closeRosterModal()" class="p-2 rounded-xl bg-slate-800 text-slate-300"><span class="material-symbols-rounded">close</span></button>
+      </div>
+
+      <div class="flex items-center gap-1.5 mb-3">
+        <button id="tab-team-yellow" onclick="switchRosterTab('yellow')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/30 text-amber-200 border border-amber-400">Time Amarelo</button>
+        <button id="tab-team-blue" onclick="switchRosterTab('blue')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 border border-white/10">Time Azul</button>
+        <button id="tab-team-green" onclick="switchRosterTab('green')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 border border-white/10">Time Verde</button>
+      </div>
+
+      <div id="roster-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 overflow-y-auto pr-1 flex-1"></div>
+      
+      <div class="border-t border-white/10 pt-3 mt-3 flex items-center justify-between">
+        <span id="roster-status" class="text-xs text-emerald-300 font-semibold">Carregando fotos da pasta images/ do GitHub...</span>
+        <button onclick="closeRosterModal()" class="btn-action px-5 py-2 rounded-xl text-xs font-bold bg-yellow-400 text-slate-950">Pronto! Voltar ao Jogo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE FIM DE JOGO -->
+  <div id="gameover-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-md p-4">
+    <div class="glass-panel rounded-3xl p-6 max-w-md w-full text-center border border-yellow-400/40 shadow-2xl">
+      <h2 id="gameover-title" class="font-title text-2xl font-bold text-white mb-2">Fim de Partida!</h2>
+      <p id="gameover-desc" class="text-sm text-slate-300 mb-6">O Time Amarelo venceu!</p>
+      <button onclick="resetMatch()" class="btn-action w-full py-3 rounded-xl font-title font-bold text-sm bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-950">Jogar Novamente</button>
+    </div>
+  </div>
+
+  <script>
+    const TEAMS = {
+      yellow: { id: 'yellow', name: 'Time Amarelo', rimHex: '#facc15', bgGrad: ['#fef08a', '#eab308', '#a16207'], dotClass: 'bg-yellow-400', folder: 'amarelo' },
+      blue:   { id: 'blue', name: 'Time Azul', rimHex: '#38bdf8', bgGrad: ['#bae6fd', '#2563eb', '#1e3a8a'], dotClass: 'bg-sky-400', folder: 'azul' },
+      green:  { id: 'green', name: 'Time Verde', rimHex: '#4ade80', bgGrad: ['#bbf7d0', '#16a34a', '#14532d'], dotClass: 'bg-emerald-400', folder: 'verde' }
+    };
+
+    let activeMatchTeams = { w: 'yellow', b: 'blue' };
+    let currentRosterTab = 'yellow';
+    
+    let customRosterData = {
+      yellow: Array(12).fill(null),
+      blue:   Array(12).fill(null),
+      green:  Array(12).fill(null)
+    };
+    
+    let pieceSlotMapping = { w: {}, b: {} };
+
+    function initPieceSlots() {
+      pieceSlotMapping.w = {};
+      pieceSlotMapping.b = {};
+      let wIdx = 0, bIdx = 0;
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          if ((r + c) % 2 === 1) {
+            if (r >= 5) pieceSlotMapping.w[`${r}_${c}`] = (wIdx++ % 12);
+            else if (r <= 2) pieceSlotMapping.b[`${r}_${c}`] = (bIdx++ % 12);
+          }
+        }
+      }
+    }
+
+    const stickerTextureCache = {};
+
+    function getTeamForSide(side) {
+      return TEAMS[activeMatchTeams[side]];
+    }
+
+    function renderStickerCanvas(teamKey, customImgElement) {
+      const team = TEAMS[teamKey];
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 512;
+      const ctx = c.getContext('2d');
+      const cx = 256, cy = 256, radius = 210;
+
+      ctx.beginPath(); ctx.arc(cx, cy, radius + 10, 0, Math.PI * 2); ctx.fillStyle = '#ffffff'; ctx.fill();
+      ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI * 2); ctx.fillStyle = team.rimHex; ctx.fill();
+
+      ctx.save();
+      ctx.beginPath(); ctx.arc(cx, cy, radius - 8, 0, Math.PI * 2); ctx.clip();
+
+      if (customImgElement) {
+        const iw = customImgElement.width;
+        const ih = customImgElement.height;
+        const sz = Math.min(iw, ih);
+        ctx.drawImage(customImgElement, (iw - sz)/2, (ih - sz)/2, sz, sz, cx - radius, cy - radius, radius * 2, radius * 2);
+      } else {
+        const grad = ctx.createRadialGradient(cx, cy - 40, 20, cx, cy, radius);
+        grad.addColorStop(0, team.bgGrad[0]); grad.addColorStop(1, team.bgGrad[2]);
+        ctx.fillStyle = grad; ctx.fillRect(0, 0, 512, 512);
+        ctx.font = '160px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('⭐', cx, cy);
+      }
+      ctx.restore();
+      return c;
+    }
+
+    function getPieceStickerTex(color, slotIndex) {
+      const team = getTeamForSide(color);
+      const cacheKey = `${team.id}_slot_${slotIndex}`;
+      if (stickerTextureCache[cacheKey]) return stickerTextureCache[cacheKey];
+
+      const imgObj = customRosterData[team.id][slotIndex];
+      const c = renderStickerCanvas(team.id, imgObj);
+      const tex = new THREE.CanvasTexture(c);
+      tex.needsUpdate = true;
+      stickerTextureCache[cacheKey] = tex;
+      return tex;
+    }
+
+    function invalidateTeamCache(teamKey) {
+      for (let i = 0; i < 12; i++) {
+        delete stickerTextureCache[`${teamKey}_slot_${i}`];
+      }
+    }
+
+    // Carrega automaticamente as imagens da pasta images/ do GitHub
+    function loadHostStickers() {
+      let loadedTotal = 0;
+      ['yellow', 'blue', 'green'].forEach(tKey => {
+        const folder = TEAMS[tKey].folder;
+        for (let i = 0; i < 12; i++) {
+          const img = new Image();
+          // Procura por arquivos como images/amarelo_1.jpg, images/azul_1.jpg, images/verde_1.jpg
+          img.src = `images/${folder}_${i + 1}.jpg`;
+          img.onload = () => {
+            customRosterData[tKey][i] = img;
+            invalidateTeamCache(tKey);
+            syncPieces();
+            loadedTotal++;
+            document.getElementById('roster-status').textContent = `Figurinha ${loadedTotal} carregada da nuvem!`;
+          };
+          img.onerror = () => {
+            // Se não achar .jpg, tenta .png
+            const imgPng = new Image();
+            imgPng.src = `images/${folder}_${i + 1}.png`;
+            imgPng.onload = () => {
+              customRosterData[tKey][i] = imgPng;
+              invalidateTeamCache(tKey);
+              syncPieces();
+            };
+          };
+        }
+      });
+    }
+
+    // Three.js Cena
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x0f172a, 0.015);
+
+    const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 200);
+    camera.position.set(0, 14, 15);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.maxPolarAngle = Math.PI / 2 - 0.05;
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+    const light = new THREE.DirectionalLight(0xfffbeb, 1.2);
+    light.position.set(10, 20, 10);
+    light.castShadow = true;
+    scene.add(light);
+
+    const boardGroup = new THREE.Group();
+    scene.add(boardGroup);
+
+    const SQUARE_SIZE = 1.75;
+    const BOARD_OFFSET = (8 * SQUARE_SIZE) / 2 - SQUARE_SIZE / 2;
+    const squareMeshes = {};
+    const pieceMeshes = [];
+    const highlightMeshes = [];
+
+    function squareToWorld(r, c) {
+      const x = c * SQUARE_SIZE - BOARD_OFFSET;
+      const z = r * SQUARE_SIZE - BOARD_OFFSET;
+      return new THREE.Vector3(x, 0, z);
+    }
+
+    function buildBoard() {
+      const frame = new THREE.Mesh(new THREE.BoxGeometry(14.6, 0.6, 14.6), new THREE.MeshStandardMaterial({ color: 0x0f172a }));
+      frame.position.y = -0.32;
+      boardGroup.add(frame);
+
+      const lightMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.4 });
+      const darkMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5 });
+
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          const isDark = (r + c) % 2 === 1;
+          const mesh = new THREE.Mesh(new THREE.BoxGeometry(SQUARE_SIZE * 0.98, 0.16, SQUARE_SIZE * 0.98), isDark ? darkMat : lightMat);
+          const pos = squareToWorld(r, c);
+          mesh.position.set(pos.x, -0.08, pos.z);
+          mesh.userData = { r, c, isDark };
+          boardGroup.add(mesh);
+          squareMeshes[`${r}_${c}`] = mesh;
+        }
+      }
+    }
+    buildBoard();
+
+    let boardState = [];
+    let turn = 'w';
+    let selectedPiece = null;
+    let legalMoves = [];
+
+    function initGame() {
+      initPieceSlots();
+      boardState = Array(8).fill(null).map(() => Array(8).fill(null));
+      for (let r = 5; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          if ((r + c) % 2 === 1) boardState[r][c] = { color: 'w', king: false };
+        }
+      }
+      for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 8; c++) {
+          if ((r + c) % 2 === 1) boardState[r][c] = { color: 'b', king: false };
+        }
+      }
+      turn = 'w';
+      selectedPiece = null;
+      legalMoves = [];
+      syncPieces();
+      updateHUD();
+    }
+
+    function createPieceMesh(color, king, slotIndex) {
+      const group = new THREE.Group();
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.72, 0.25, 32), new THREE.MeshStandardMaterial({ color: 0x18181b }));
+      base.position.y = 0.125; base.castShadow = true;
+      group.add(base);
+
+      const tex = getPieceStickerTex(color, slotIndex);
+      const face = new THREE.Mesh(new THREE.CircleGeometry(0.62, 32), new THREE.MeshBasicMaterial({ map: tex, transparent: true }));
+      face.rotation.x = -Math.PI / 2;
+      face.position.y = 0.26;
+      group.add(face);
+
+      if (king) {
+        const crown = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.4, 6), new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.8 }));
+        crown.position.y = 0.55;
+        group.add(crown);
+      }
+      return group;
+    }
+
+    function syncPieces() {
+      pieceMeshes.forEach(m => scene.remove(m));
+      pieceMeshes.length = 0;
+
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          const p = boardState[r][c];
+          if (p) {
+            const sqKey = `${r}_${c}`;
+            const slotIdx = pieceSlotMapping[p.color][sqKey] !== undefined ? pieceSlotMapping[p.color][sqKey] : 0;
+            const mesh = createPieceMesh(p.color, p.king, slotIdx);
+            const pos = squareToWorld(r, c);
+            mesh.position.set(pos.x, 0, pos.z);
+            mesh.userData = { r, c, color: p.color };
+            scene.add(mesh);
+            pieceMeshes.push(mesh);
+          }
+        }
+      }
+    }
+
+    function getLegalMoves(r, c) {
+      const p = boardState[r][c];
+      if (!p || p.color !== turn) return [];
+      const moves = [];
+      const dirs = p.king ? [[1,1],[1,-1],[-1,1],[-1,-1]] : (p.color === 'w' ? [[-1,1],[-1,-1]] : [[1,1],[1,-1]]);
+
+      dirs.forEach(([dr, dc]) => {
+        if (p.king) {
+          let step = 1;
+          let jumped = null;
+          while (true) {
+            const nr = r + dr * step, nc = c + dc * step;
+            if (nr < 0 || nr > 7 || nc < 0 || nc > 7) break;
+            const occupant = boardState[nr][nc];
+            if (!occupant) {
+              moves.push({ r: nr, c: nc, jump: jumped });
+            } else {
+              if (occupant.color === p.color || jumped) break;
+              jumped = { r: nr, c: nc };
+            }
+            step++;
+          }
+        } else {
+          const nr = r + dr, nc = c + dc;
+          if (nr >= 0 && nr <= 7 && nc >= 0 && nc <= 7) {
+            const occupant = boardState[nr][nc];
+            if (!occupant) {
+              moves.push({ r: nr, c: nc, jump: null });
+            } else if (occupant.color !== p.color) {
+              const nnr = nr + dr, nnc = nc + dc;
+              if (nnr >= 0 && nnr <= 7 && nnc >= 0 && nnc <= 7 && !boardState[nnr][nnc]) {
+                moves.push({ r: nnr, c: nnc, jump: { r: nr, c: nc } });
+              }
+            }
+          }
+        }
+      });
+      return moves;
+    }
+
+    function clearHighlights() {
+      highlightMeshes.forEach(m => scene.remove(m));
+      highlightMeshes.length = 0;
+    }
+
+    function showHighlights() {
+      clearHighlights();
+      legalMoves.forEach(m => {
+        const mesh = new THREE.Mesh(
+          new THREE.RingGeometry(0.5, 0.7, 32),
+          new THREE.MeshBasicMaterial({ color: m.jump ? 0xef4444 : 0x38bdf8, side: THREE.DoubleSide })
+        );
+        mesh.rotation.x = -Math.PI / 2;
+        const pos = squareToWorld(m.r, m.c);
+        mesh.position.set(pos.x, 0.05, pos.z);
+        mesh.userData = { targetR: m.r, targetC: m.c };
+        scene.add(mesh);
+        highlightMeshes.push(mesh);
+      });
+    }
+
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+
+    window.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('header, footer, div[id$="-modal"]')) return;
+      pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+      pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+
+      const hits = raycaster.intersectObjects([...pieceMeshes, ...highlightMeshes, ...Object.values(squareMeshes)], true);
+      if (hits.length === 0) return;
+
+      let obj = hits[0].object;
+      while (obj && !obj.userData.hasOwnProperty('r') && !obj.userData.hasOwnProperty('targetR')) {
+        obj = obj.parent;
+      }
+      if (!obj) return;
+
+      if (obj.userData.hasOwnProperty('targetR')) {
+        const tr = obj.userData.targetR, tc = obj.userData.targetC;
+        const move = legalMoves.find(m => m.r === tr && m.c === tc);
+        if (move) executeMove(selectedPiece.r, selectedPiece.c, tr, tc, move.jump);
+        return;
+      }
+
+      if (obj.userData.hasOwnProperty('color') && obj.userData.color === turn) {
+        selectedPiece = { r: obj.userData.r, c: obj.userData.c };
+        legalMoves = getLegalMoves(selectedPiece.r, selectedPiece.c);
+        showHighlights();
+      }
+    });
+
+    function executeMove(fr, fc, tr, tc, jump) {
+      const piece = boardState[fr][fc];
+      boardState[fr][fc] = null;
+      boardState[tr][tc] = piece;
+
+      const oldKey = `${fr}_${fc}`;
+      const newKey = `${tr}_${tc}`;
+      if (pieceSlotMapping[piece.color][oldKey] !== undefined) {
+        pieceSlotMapping[piece.color][newKey] = pieceSlotMapping[piece.color][oldKey];
+        delete pieceSlotMapping[piece.color][oldKey];
+      }
+
+      if (jump) {
+        const jumpedKey = `${jump.r}_${jump.c}`;
+        const jumpedPiece = boardState[jump.r][jump.c];
+        if (jumpedPiece && pieceSlotMapping[jumpedPiece.color][jumpedKey] !== undefined) {
+          delete pieceSlotMapping[jumpedPiece.color][jumpedKey];
+        }
+        boardState[jump.r][jump.c] = null;
+        showToast('⚔️ Peça capturada!');
+      }
+
+      if ((piece.color === 'w' && tr === 0) || (piece.color === 'b' && tr === 7)) {
+        piece.king = true;
+        showToast('👑 Nova Dama Coroada!');
+      }
+
+      selectedPiece = null;
+      legalMoves = [];
+      clearHighlights();
+      turn = turn === 'w' ? 'b' : 'w';
+      syncPieces();
+      updateHUD();
+      checkWinCondition();
+    }
+
+    function checkWinCondition() {
+      let wCount = 0, bCount = 0;
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          if (boardState[r][c]?.color === 'w') wCount++;
+          if (boardState[r][c]?.color === 'b') bCount++;
+        }
+      }
+      if (wCount === 0 || bCount === 0) {
+        const winner = wCount > 0 ? TEAMS[activeMatchTeams.w].name : TEAMS[activeMatchTeams.b].name;
+        document.getElementById('gameover-desc').textContent = `${winner} venceu a partida!`;
+        const modal = document.getElementById('gameover-modal');
+        modal.classList.remove('hidden'); modal.classList.add('flex');
+      }
+    }
+
+    function updateHUD() {
+      const team = getTeamForSide(turn);
+      document.getElementById('turn-text').textContent = team.name;
+      document.getElementById('turn-orb').className = `w-4 h-4 rounded-full transition-all duration-500 ${team.dotClass}`;
+      
+      let w = 0, b = 0;
+      boardState.forEach(row => row.forEach(p => { if(p?.color==='w')w++; if(p?.color==='b')b++; }));
+      document.getElementById('count-w').textContent = w;
+      document.getElementById('count-b').textContent = b;
+    }
+
+    function showToast(text) {
+      const t = document.getElementById('combat-toast');
+      t.textContent = text; t.classList.remove('opacity-0', '-translate-y-3');
+      setTimeout(() => t.classList.add('opacity-0', '-translate-y-3'), 2500);
+    }
+
+    window.changeMatchup = function(side, teamKey) {
+      activeMatchTeams[side] = teamKey;
+      updateHUD();
+      syncPieces();
+    };
+
+    window.resetMatch = function() {
+      initGame();
+      document.getElementById('gameover-modal').classList.add('hidden');
+      document.getElementById('gameover-modal').classList.remove('flex');
+    };
+
+    window.openTutorialModal = function() { document.getElementById('tutorial-modal').classList.remove('hidden'); document.getElementById('tutorial-modal').classList.add('flex'); }
+    window.closeTutorialModal = function() { document.getElementById('tutorial-modal').classList.add('hidden'); document.getElementById('tutorial-modal').classList.remove('flex'); }
+    window.openRosterModal = function() { document.getElementById('roster-modal').classList.remove('hidden'); document.getElementById('roster-modal').classList.add('flex'); renderRosterGrid(); }
+    window.closeRosterModal = function() { document.getElementById('roster-modal').classList.add('hidden'); document.getElementById('roster-modal').classList.remove('flex'); }
+
+    window.switchRosterTab = function(teamKey) {
+      currentRosterTab = teamKey;
+      ['yellow','blue','green'].forEach(t => {
+        const btn = document.getElementById(`tab-team-${t}`);
+        btn.className = t === teamKey ? 'px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/30 text-amber-200 border border-amber-400' : 'px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 border border-white/10';
+      });
+      renderRosterGrid();
+    };
+
+    function renderRosterGrid() {
+      const grid = document.getElementById('roster-grid');
+      grid.innerHTML = '';
+      const team = TEAMS[currentRosterTab];
+      const slots = customRosterData[currentRosterTab];
+
+      for (let i = 0; i < 12; i++) {
+        const card = document.createElement('div');
+        card.className = 'p-2.5 rounded-2xl bg-slate-900 border border-white/10 flex items-center gap-2.5';
+        
+        const previewCanvas = renderStickerCanvas(currentRosterTab, slots[i]);
+        const prevUrl = previewCanvas.toDataURL('image/png');
+
+        card.innerHTML = `
+          <img src="${prevUrl}" class="w-14 h-14 rounded-2xl border border-yellow-400/50 object-cover bg-slate-950 shrink-0" />
+          <div class="flex-1 min-w-0">
+            <div class="text-[10px] uppercase tracking-wider text-yellow-300 font-bold truncate">Peça ${i + 1} (${team.name})</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">Carregado de: images/${team.folder}_${i+1}.jpg</div>
+          </div>
+        `;
+        grid.appendChild(card);
+      }
+    }
+
+    window.setCameraView = function(preset) {
+      if (preset === 'white') camera.position.set(0, 14, 15);
+      if (preset === 'black') camera.position.set(0, 14, -15);
+      if (preset === 'top') camera.position.set(0, 22, 0.01);
+      controls.target.set(0, 0, 0);
+    };
+
+    initGame();
+    loadHostStickers(); // Inicia o carregamento automático das figurinhas da pasta images/ do GitHub
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
